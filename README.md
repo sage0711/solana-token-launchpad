@@ -10,6 +10,7 @@ We recommend choosing devnet. If you choose 'mainnet-beta', you have to pay real
 
 You can use 'select wallet' button to select wallet type and 'connect' button to connect to selected wallet.
 We recommend 'Phantom Wallet'.
+<img src="./src/assets/readme/walletconnect.png"/>
 
 <h2>## Upload MetaData</h2>
 
@@ -61,6 +62,8 @@ example for metadata file content:
     }
   }
 
+<img src="./src/assets/readme/upload_metadata.png"/>
+<img src="./src/assets/readme/upload_metadata_1.png"/>
 
 <h2>## Creating a Token</h2>
 
@@ -70,9 +73,14 @@ And then you can create your token with your specific info.
 If you input metadata url, you need to match name and symbol to metadata content.
 Please input metadata you noted.
 
+<img src="./src/assets/readme/token_creator.png"/>
+<img src="./src/assets/readme/token_creator_1.png.png"/>
+
 <h2>## Confirming Token</h2>
 
 You can confirm token with any transaction( ex. transfer )
+<img src="./src/assets/readme/metadata_check.png"/>
+<img src="./src/assets/readme/metadata_update.png"/>
 
 <h2>## Get Token Metadata</h2>
 
