@@ -81,19 +81,19 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
             >
               <option
                 value="devnet"
-                className="py-4 block text-md font-normal bg-purple-600"
+                className="py-4 block text-md font-normal bg-[#18a2b4]"
               >
                 Devnet
               </option>
               <option
                 value="testnet"
-                className="py-4 block text-md font-normal bg-purple-600"
+                className="py-4 block text-md font-normal bg-[#18a2b4]"
               >
                 Testnet
               </option>
               <option
                 value="mainnet-beta"
-                className="py-4 block text-md font-normal bg-purple-600"
+                className="py-4 block text-md font-normal bg-[#18a2b4]"
               >
                 Mainnet-beta
               </option>
