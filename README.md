@@ -1,5 +1,5 @@
 <pre>
-<h1># Solana Token Creator with Blockist</h1>
+<h1># Solana Token Creator</h1>
 
 <h2>## Select Net</h2>
 
