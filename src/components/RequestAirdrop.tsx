@@ -13,8 +13,7 @@ export const RequestAirdrop: FC = () => {
     if (!publicKey) {
       notify({
         type: "error",
-        message: "error",
-        description: "Wallet not connected!",
+        message: "Wallet not connected!",
       });
       return;
     }
