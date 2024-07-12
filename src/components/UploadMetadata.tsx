@@ -324,7 +324,7 @@ export const UploadMetadata: FC = ({}) => {
           </div>
         </div>
         <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-          <div className="md:col-span-1">
+          <div className="flex flex-col items-center justify-center md:col-span-1">
             <div className="px-4 sm:px-0">
               <h3 className="text-lg font-medium leading-6 text-gray-900">
                 Image URL
@@ -337,7 +337,7 @@ export const UploadMetadata: FC = ({}) => {
               </p>
             </div>
           </div>
-          <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1">
+          <div className="flex items-center justify-center mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1">
             {!imageUrl ? (
               <div className="mt-1 sm:mt-0 sm:col-span-1">
                 <div className="max-w-lg flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
