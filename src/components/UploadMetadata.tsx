@@ -57,7 +57,6 @@ export const UploadMetadata: FC = ({}) => {
   const initializeBundlr = async () => {
     // initialise a bundlr client
     let bundler;
-    console.log("selected", selected);
     if (selected === null) {
       notify({ type: "error", message: `Please select network` });
       return;
