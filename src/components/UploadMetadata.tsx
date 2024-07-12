@@ -1,4 +1,4 @@
-import { FC, useState, Fragment, useEffect } from "react";
+import { FC, useState, Fragment, useEffect, useRef } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, SelectorIcon } from "@heroicons/react/solid";
 import { WebBundlr } from "@bundlr-network/client";
@@ -18,13 +18,17 @@ const classNames = (...classes) => {
 
 export const UploadMetadata: FC = ({}) => {
   const wallet = useWallet();
+  const fileInputRef = useRef(null);
   const [provider, setProvider] = useState(null);
   const [address, setAddress] = useState(null);
   const [bundlr, setBundlr] = useState(null);
   const [selected, setSelected] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageReplace, setSelectedImageReplace] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [imageFileReplace, setImageFileReplace] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
+  const [imageUrlReplace, setImageUrlReplace] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [metadataUrl, setMetadataUrl] = useState(null);
@@ -53,7 +57,11 @@ export const UploadMetadata: FC = ({}) => {
   const initializeBundlr = async () => {
     // initialise a bundlr client
     let bundler;
-    if (selected.name === "https://devnet.bundlr.network") {
+    console.log("selected", selected);
+    if (selected === null) {
+      notify({ type: "error", message: `Please select network` });
+      return;
+    } else if (selected.name === "https://devnet.bundlr.network") {
       bundler = new WebBundlr(`${selected.name}`, "solana", provider, {
         providerUrl: "https://api.devnet.solana.com",
       });
@@ -88,17 +96,22 @@ export const UploadMetadata: FC = ({}) => {
     setBundlr(bundler);
   };
 
+  const handleImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   const handleImageChange = (event) => {
     const file = event.target.files[0];
-    let reader = new FileReader();
     if (file) {
       setSelectedImage(file.name);
-      reader.onload = function () {
-        if (reader.result) {
-          setImageFile(Buffer.from(reader.result as ArrayBuffer));
-        }
-      };
-      reader.readAsArrayBuffer(file);
+      if (imageUrl) {
+        setSelectedImageReplace(file.name);
+        setImageFileReplace(file);
+      } else {
+        setImageFile(file);
+      }
     }
   };
 
@@ -144,7 +157,17 @@ export const UploadMetadata: FC = ({}) => {
   };
 
   const uploadImage = async () => {
-    const price = await bundlr.utils.getPrice("solana", imageFile.length);
+    let fileToUpload = imageFile;
+    if (imageFileReplace) {
+      fileToUpload = imageFileReplace;
+    }
+
+    if (!fileToUpload) return;
+
+    const arrayBuffer = await fileToUpload.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const price = await bundlr.utils.getPrice("solana", buffer.length);
     let amount = bundlr.utils.unitConverter(price);
     amount = amount.toNumber();
 
@@ -156,7 +179,7 @@ export const UploadMetadata: FC = ({}) => {
       await bundlr.fund(LAMPORTS_PER_SOL);
     }
 
-    const imageResult = await bundlr.uploader.upload(imageFile, [
+    const imageResult = await bundlr.uploader.upload(buffer, [
       { name: "Content-Type", value: "image/png" },
     ]);
 
@@ -164,6 +187,9 @@ export const UploadMetadata: FC = ({}) => {
 
     if (arweaveImageUrl) {
       setImageUrl(arweaveImageUrl);
+      setImageFile(null);
+      setImageFileReplace(null);
+      setSelectedImageReplace(null);
     }
   };
 
@@ -316,6 +342,16 @@ export const UploadMetadata: FC = ({}) => {
             {!imageUrl ? (
               <div className="mt-1 sm:mt-0 sm:col-span-1">
                 <div className="max-w-lg flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  {imageUrl && (
+                    <div>
+                      <img
+                        src={imageUrl}
+                        alt="Uploaded"
+                        className="w-[100px] mh-[100px] cursor-pointer"
+                      />
+                      <p>{selectedImage}</p>
+                    </div>
+                  )}
                   <div className="space-y-1 text-center">
                     <svg
                       className="mx-auto h-12 w-12 text-gray-400"
@@ -331,6 +367,7 @@ export const UploadMetadata: FC = ({}) => {
                         strokeLinejoin="round"
                       />
                     </svg>
+
                     <div className="flex text-sm text-gray-600">
                       <label
                         htmlFor="image-upload"
@@ -340,6 +377,7 @@ export const UploadMetadata: FC = ({}) => {
                         <input
                           id="image-upload"
                           name="image-upload"
+                          ref={fileInputRef}
                           type="file"
                           className="sr-only"
                           onChange={handleImageChange}
@@ -354,16 +392,68 @@ export const UploadMetadata: FC = ({}) => {
                 </div>
               </div>
             ) : (
-              <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-                <a href={imageUrl} target="_blank" rel="noreferrer">
-                  {imageUrl}
-                </a>
+              <div
+                className="max-w-lg flex gap-[5px] items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
+                onClick={handleImageClick}
+              >
+                {imageUrl && (
+                  <div>
+                    <img
+                      src={imageUrl}
+                      alt="Uploaded"
+                      className="w-[100px] mh-[100px] cursor-pointer"
+                    />
+                    <p>{selectedImage}</p>
+                  </div>
+                )}
+                {imageFile && !imageUrl && (
+                  <div>
+                    <img
+                      src={URL.createObjectURL(imageFile)}
+                      alt="New Upload"
+                      className="w-[100px] mh-[100px] cursor-pointer"
+                    />
+                    <p>{selectedImage}</p>
+                  </div>
+                )}
+                {imageFileReplace && imageUrl && (
+                  <div className="flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                      className="size-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"
+                      />
+                    </svg>
+                    <div>
+                      <img
+                        src={URL.createObjectURL(imageFileReplace)}
+                        alt="Replace"
+                        className="w-[100px] mh-[100px] cursor-pointer"
+                      />
+                      <p>{selectedImageReplace}</p>
+                    </div>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
               </div>
             )}
           </div>
           <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1">
             <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-              {!imageUrl && (
+              {
                 <button
                   className="px-8 m-2 btn bg-[#18a2b4] ..."
                   onClick={async () => uploadImage()}
@@ -371,7 +461,7 @@ export const UploadMetadata: FC = ({}) => {
                 >
                   Upload Image
                 </button>
-              )}
+              }
             </div>
           </div>
         </div>
@@ -398,11 +488,8 @@ export const UploadMetadata: FC = ({}) => {
                 <div className="max-w-lg flex justify-center px-6 pt-5 pb-6 ">
                   <div className="space-y-1 text-center">
                     {!metadataUrl && (
-                      <div className="flex flex-col gap-[20px]">
+                      <div className="flex flex-col">
                         <div className="flex flex-col flex-1 items-start">
-                          <p className="text-[#0a3245]">
-                            <span className="text-[#f56565]">*</span> Name:
-                          </p>
                           <input
                             type="text"
                             className="mt-[10px] form-control block mb-2 w-full h-[52px] px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-[3px] border-[#bbe3e9] rounded-[12px] transition ease-in-out m-0 focus:text-gray-700 focus:bg-white  focus:outline-none"
@@ -411,9 +498,6 @@ export const UploadMetadata: FC = ({}) => {
                           />
                         </div>
                         <div className="flex flex-col flex-1 items-start">
-                          <p className="text-[#0a3245]">
-                            <span className="text-[#f56565]">*</span> Symbol:
-                          </p>
                           <input
                             type="text"
                             className="mt-[10px] form-control block mb-2 w-full h-[52px] px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-[3px] border-[#bbe3e9] rounded-[12px] transition ease-in-out m-0 focus:text-gray-700 focus:bg-white  focus:outline-none"
@@ -422,10 +506,6 @@ export const UploadMetadata: FC = ({}) => {
                           />
                         </div>
                         <div className="flex flex-col flex-1 items-start">
-                          <p className="text-[#0a3245]">
-                            <span className="text-[#f56565]">*</span>{" "}
-                            Description:
-                          </p>
                           <textarea
                             className="mt-[10px] form-control block mb-2 w-full min-w-[400px] px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-[3px] border-[#bbe3e9] rounded-[12px] transition ease-in-out m-0 focus:text-gray-700 focus:bg-white  focus:outline-none h-[100%]"
                             placeholder="Description"
@@ -433,9 +513,6 @@ export const UploadMetadata: FC = ({}) => {
                           />
                         </div>
                         <div className="flex flex-col flex-1 items-start">
-                          <p className="text-[#0a3245]">
-                            <span className="text-[#f56565]">*</span> Website:
-                          </p>
                           <input
                             type="text"
                             className="mt-[10px] form-control block mb-2 w-full h-[52px] px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-[3px] border-[#bbe3e9] rounded-[12px] transition ease-in-out m-0 focus:text-gray-700 focus:bg-white  focus:outline-none"
@@ -444,9 +521,6 @@ export const UploadMetadata: FC = ({}) => {
                           />
                         </div>
                         <div className="flex flex-col flex-1 items-start">
-                          <p className="text-[#0a3245]">
-                            <span className="text-[#f56565]">*</span> Twitter:
-                          </p>
                           <input
                             type="text"
                             className="mt-[10px] form-control block mb-2 w-full h-[52px] px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-[3px] border-[#bbe3e9] rounded-[12px] transition ease-in-out m-0 focus:text-gray-700 focus:bg-white  focus:outline-none"
@@ -455,9 +529,6 @@ export const UploadMetadata: FC = ({}) => {
                           />
                         </div>
                         <div className="flex flex-col flex-1 items-start">
-                          <p className="text-[#0a3245]">
-                            <span className="text-[#f56565]">*</span> Telegram:
-                          </p>
                           <input
                             type="text"
                             className="mt-[10px] form-control block mb-2 w-full h-[52px] px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-[3px] border-[#bbe3e9] rounded-[12px] transition ease-in-out m-0 focus:text-gray-700 focus:bg-white  focus:outline-none"
@@ -466,9 +537,6 @@ export const UploadMetadata: FC = ({}) => {
                           />
                         </div>
                         <div className="flex flex-col flex-1 items-start">
-                          <p className="text-[#0a3245]">
-                            <span className="text-[#f56565]">*</span> Discord:
-                          </p>
                           <input
                             type="text"
                             className="mt-[10px] form-control block mb-2 w-full h-[52px] px-4 py-2 text-xl font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-[3px] border-[#bbe3e9] rounded-[12px] transition ease-in-out m-0 focus:text-gray-700 focus:bg-white  focus:outline-none"
