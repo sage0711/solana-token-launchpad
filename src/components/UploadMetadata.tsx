@@ -174,8 +174,25 @@ export const UploadMetadata: FC = ({}) => {
     let balance = bundlr.utils.unitConverter(loadedBalance.toNumber());
     balance = balance.toNumber();
 
+    // Add a buffer to the funding amount (e.g., 0.2 SOL) and convert to integer
+    const fundingBuffer = LAMPORTS_PER_SOL * 0.2;
+    const totalFundingAmount = Math.ceil(amount + fundingBuffer);
+
+    if (balance < totalFundingAmount) {
+      await bundlr.fund(totalFundingAmount);
+      balance = bundlr.utils.unitConverter(
+        (await bundlr.getLoadedBalance()).toNumber()
+      );
+      balance = balance.toNumber();
+    }
+
     if (balance < amount) {
-      await bundlr.fund(LAMPORTS_PER_SOL);
+      notify({
+        type: "error",
+        message:
+          "Insufficient balance after funding. Please ensure your wallet has enough SOL.",
+      });
+      return;
     }
 
     const imageResult = await bundlr.uploader.upload(buffer, [
